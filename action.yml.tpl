@@ -10,7 +10,7 @@ inputs:
   skip-prerelease:
     description: "Whether to skip prerelease versions and return the current version"
     required: false
-    default: "false"
+    default: false
 outputs:
   version:
     description: 'Next version'
