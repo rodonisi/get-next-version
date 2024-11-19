@@ -7,7 +7,7 @@ inputs:
     description: 'Sets the version prefix'
     required: false
     default: ''
-  skip-prerelease:
+  skip_prerelease:
     description: "Whether to skip prerelease versions and return the current version"
     required: false
     default: 'false'
