@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - 'main'
+      - "main"
 
 permissions:
   contents: write
@@ -15,69 +15,69 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Clone repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: '0'
-        token: ${{ secrets.TOKEN_GITHUB_TO_GITHUB_REPOSITORIES_RW }}
-    - name: Login to GitHub container registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Use Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.18'
-    - name: Configure action to use Dockerfile for local execution
-      run: |
-        cat ./action.yml.tpl | sed "s/<docker-image>/Dockerfile/" > ./action.yml
-    - name: Get next version
-      id: get_next_version
-      uses: ./
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+          token: ${{ secrets.TOKEN_GITHUB_TO_GITHUB_REPOSITORIES_RW }}
+      - name: Login to GitHub container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Use Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.18"
+      - name: Configure action to use Dockerfile for local execution
+        run: |
+          cat ./action.yml.tpl | sed "s/<docker-image>/Dockerfile/" > ./action.yml
+      - name: Get next version
+        id: get_next_version
+        uses: ./
 
-    - name: Set new image version in action.yml
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      run: |
-        cat ./action.yml.tpl | sed "s/<docker-image>/docker:\/\/ghcr.io\/thenativeweb\/get-next-version:${{ steps.get_next_version.outputs.version }}/" > ./action.yml
-    - name: Create release commit
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      uses: EndBug/add-and-commit@v9
-      with:
-        add: ./action.yml
-        message: "chore(release): Version ${{ steps.get_next_version.outputs.version }} [skip ci]"
-        default_author: github_actions
-    - name: Create new version
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      run: |
-        NEXT_VERSION=${{ steps.get_next_version.outputs.version }}
+      - name: Set new image version in action.yml
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        run: |
+          cat ./action.yml.tpl | sed "s/<docker-image>/docker:\/\/ghcr.io\/rodonisi\/get-next-version:${{ steps.get_next_version.outputs.version }}/" > ./action.yml
+      - name: Create release commit
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: ./action.yml
+          message: "chore(release): Version ${{ steps.get_next_version.outputs.version }} [skip ci]"
+          default_author: github_actions
+      - name: Create new version
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        run: |
+          NEXT_VERSION=${{ steps.get_next_version.outputs.version }}
 
-        git tag $NEXT_VERSION
-        git push origin $NEXT_VERSION
-    - name: Build artifacts
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      run: |
-        make build-all
-    - name: Release new version
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "build/*"
-        tag: ${{ steps.get_next_version.outputs.version }}
+          git tag $NEXT_VERSION
+          git push origin $NEXT_VERSION
+      - name: Build artifacts
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        run: |
+          make build-all
+      - name: Release new version
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/*"
+          tag: ${{ steps.get_next_version.outputs.version }}
 
-    - name: Set up QEMU
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      uses: docker/setup-qemu-action@v3
-    - name: Set up Docker Buildx
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      uses: docker/setup-buildx-action@v3
-    - name: Build and push docker image
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      uses: docker/build-push-action@v6
-      env:
-          DOCKER_REPOSITORY: ghcr.io/thenativeweb/get-next-version
-      with:
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ env.DOCKER_REPOSITORY }}:latest,${{ env.DOCKER_REPOSITORY }}:${{steps.get_next_version.outputs.version}}
+      - name: Set up QEMU
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push docker image
+        if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_REPOSITORY: ghcr.io/rodonisi/get-next-version
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.DOCKER_REPOSITORY }}:latest,${{ env.DOCKER_REPOSITORY }}:${{steps.get_next_version.outputs.version}}

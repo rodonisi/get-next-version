@@ -16,11 +16,13 @@ import (
 var rootRepositoryFlag string
 var rootTargetFlag string
 var rootPrefixFlag string
+var rootSkipPre bool
 
 func init() {
 	RootCommand.Flags().StringVarP(&rootRepositoryFlag, "repository", "r", ".", "sets the path to the repository")
 	RootCommand.Flags().StringVarP(&rootTargetFlag, "target", "t", "version", "sets the output target")
 	RootCommand.Flags().StringVarP(&rootPrefixFlag, "prefix", "p", "", "sets the version prefix")
+	RootCommand.Flags().BoolVarP(&rootSkipPre, "skip-prerelease", "s", false, "skip pre-release versions")
 }
 
 var RootCommand = &cobra.Command{
@@ -52,6 +54,9 @@ var RootCommand = &cobra.Command{
 		result, err := git.GetConventionalCommitTypesSinceLastRelease(repository)
 		if err != nil {
 			log.Fatal().Msg(err.Error())
+		} else if rootSkipPre && result.LatestReleaseVersion.Prerelease() != "" {
+			nextVersion, _ = (*result.LatestReleaseVersion).SetPrerelease("")
+			hasNextVersion = false
 		} else {
 			nextVersion, hasNextVersion = versioning.CalculateNextVersion(result.LatestReleaseVersion, result.ConventionalCommitTypes)
 		}
