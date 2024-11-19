@@ -11,6 +11,7 @@ inputs:
     description: "Whether to skip prerelease versions and return the current version"
     required: false
     default: false
+    type: boolean
 outputs:
   version:
     description: 'Next version'
